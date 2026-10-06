@@ -1,0 +1,978 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>CommsHub — Portal CCM (U3-A2 Dinamismo JS)</title>
+
+  <!-- Bootstrap 5.3.3 CSS -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.3/css/bootstrap.min.css">
+  <!-- Bootstrap Icons 1.11.3 -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-icons/1.11.3/font/bootstrap-icons.min.css">
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Montserrat:wght@700;800&display=swap" rel="stylesheet">
+  <!-- Estilos U3-A1 (base) -->
+  <link rel="stylesheet" href="css/estilos.css">
+  <!-- Estilos U3-A2 (extensión dinámica) -->
+  <style>
+    /* ═══════════════════════════════════════════════════
+       U3-A2: ESTILOS ADICIONALES — validación, API, cola
+       García González Daniel | Grupo 9696 | 2025
+    ═══════════════════════════════════════════════════ */
+
+    /* ── Validación en tiempo real ── */
+    .ch-campo-validado { position: relative; }
+
+    .ch-input.campo-ok {
+      border-color: #10B981 !important;
+      background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' fill='%2310B981' viewBox='0 0 16 16'%3e%3cpath d='M10.97 4.97a.75.75 0 0 1 1.07 1.05l-3.99 4.99a.75.75 0 0 1-1.08.02L4.324 8.384a.75.75 0 1 1 1.06-1.06l2.094 2.093 3.473-4.425z'/%3e%3c/svg%3e");
+      background-repeat: no-repeat;
+      background-position: right .75rem center;
+      background-size: 16px 16px;
+      padding-right: 2.25rem;
+    }
+
+    .ch-input.campo-error {
+      border-color: #EF4444 !important;
+      background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' fill='%23EF4444' viewBox='0 0 16 16'%3e%3cpath d='M16 8A8 8 0 1 1 0 8a8 8 0 0 1 16 0zM5.354 4.646a.5.5 0 1 0-.708.708L7.293 8l-2.647 2.646a.5.5 0 0 0 .708.708L8 8.707l2.646 2.647a.5.5 0 0 0 .708-.708L8.707 8l2.647-2.646a.5.5 0 0 0-.708-.708L8 7.293z'/%3e%3c/svg%3e");
+      background-repeat: no-repeat;
+      background-position: right .75rem center;
+      background-size: 16px 16px;
+      padding-right: 2.25rem;
+    }
+
+    .ch-msg-validacion {
+      font-size: .8rem;
+      font-weight: 600;
+      margin-top: .3rem;
+      min-height: 1.1rem;
+      transition: opacity 180ms ease;
+    }
+    .ch-msg-validacion.ok    { color: #10B981; }
+    .ch-msg-validacion.error { color: #EF4444; }
+
+    /* ── Sección Panel API ── */
+    .ch-panel-api { background: #fff; }
+
+    .ch-api-card {
+      background: #F4F6F9;
+      border: 1px solid #E2E8F0;
+      border-radius: 10px;
+      padding: 1rem 1.2rem;
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+      transition: box-shadow 220ms ease, transform 220ms ease;
+    }
+    .ch-api-card:hover {
+      box-shadow: 0 4px 16px rgba(0,0,0,.1);
+      transform: translateY(-3px);
+    }
+
+    .ch-api-icono {
+      width: 44px; height: 44px;
+      border-radius: 8px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 1.3rem;
+      flex-shrink: 0;
+    }
+
+    .ch-api-meta { flex: 1; min-width: 0; }
+    .ch-api-nombre { font-family: 'Montserrat', sans-serif; font-weight: 700; font-size: .9rem; color: #1E293B; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .ch-api-detalle { font-size: .78rem; color: #64748B; margin-top: .1rem; }
+
+    .ch-api-badge {
+      font-size: .72rem;
+      font-weight: 700;
+      padding: .2rem .55rem;
+      border-radius: 50px;
+      white-space: nowrap;
+    }
+    .badge-ok        { background: rgba(16,185,129,.15); color: #059669; }
+    .badge-pendiente { background: rgba(245,158,11,.15);  color: #D97706; }
+    .badge-error     { background: rgba(239,68,68,.15);   color: #DC2626; }
+
+    .ch-spinner-wrap { text-align: center; padding: 3rem 0; color: #64748B; }
+
+    /* ── Sección Cola de Envíos ── */
+    .ch-cola-header {
+      display: flex;
+      align-items: center;
+      gap: .75rem;
+      margin-bottom: 1.25rem;
+      flex-wrap: wrap;
+    }
+
+    .ch-cola-input-wrap {
+      display: flex;
+      gap: .5rem;
+      margin-bottom: 1.5rem;
+    }
+
+    .ch-cola-input {
+      flex: 1;
+      font-family: 'Inter', sans-serif;
+      font-size: .9rem;
+      border: 1.5px solid #CBD5E1;
+      border-radius: 6px;
+      padding: .55rem .85rem;
+      transition: border-color 220ms ease, box-shadow 220ms ease;
+    }
+    .ch-cola-input:focus {
+      outline: none;
+      border-color: #10B981;
+      box-shadow: 0 0 0 3px rgba(16,185,129,.15);
+    }
+
+    .ch-envio-item {
+      display: flex;
+      align-items: center;
+      gap: .85rem;
+      background: #F4F6F9;
+      border: 1px solid #E2E8F0;
+      border-radius: 8px;
+      padding: .75rem 1rem;
+      margin-bottom: .6rem;
+      transition: opacity 220ms ease, background 220ms ease;
+    }
+    .ch-envio-item.completado {
+      background: rgba(16,185,129,.07);
+      border-color: rgba(16,185,129,.3);
+      opacity: .75;
+    }
+    .ch-envio-item.completado .ch-envio-texto { text-decoration: line-through; color: #94A3B8; }
+
+    .ch-envio-texto { flex: 1; font-size: .88rem; color: #1E293B; }
+
+    .ch-envio-btn {
+      background: none;
+      border: none;
+      cursor: pointer;
+      font-size: 1rem;
+      padding: .25rem .4rem;
+      border-radius: 5px;
+      transition: background 180ms ease;
+    }
+    .ch-envio-btn--ok    { color: #10B981; }
+    .ch-envio-btn--ok:hover  { background: rgba(16,185,129,.15); }
+    .ch-envio-btn--del   { color: #EF4444; }
+    .ch-envio-btn--del:hover { background: rgba(239,68,68,.12); }
+
+    .ch-counters {
+      display: flex;
+      gap: 1.5rem;
+      font-size: .82rem;
+      color: #64748B;
+      margin-bottom: .75rem;
+      flex-wrap: wrap;
+    }
+    .ch-counters span b { color: #1E293B; }
+
+    /* Botón peligro pequeño */
+    .ch-btn-limpiar {
+      background: none;
+      border: 1.5px solid #EF4444;
+      color: #EF4444;
+      border-radius: 6px;
+      padding: .3rem .85rem;
+      font-size: .82rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background 200ms ease, color 200ms ease;
+    }
+    .ch-btn-limpiar:hover { background: #EF4444; color: #fff; }
+    .ch-btn-limpiar:disabled { opacity: .4; cursor: not-allowed; }
+
+    /* Animación entrada ítem */
+    @keyframes entrada {
+      from { opacity: 0; transform: translateY(-8px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+    .ch-envio-item.nuevo { animation: entrada .22s ease; }
+  </style>
+</head>
+<body>
+
+<!-- ══════════════════════════════════════════
+     HEADER — Estructura heredada de U3-A1
+     (navbar + carrusel Bootstrap)
+══════════════════════════════════════════ -->
+<header>
+
+  <!-- NAV -->
+  <nav class="navbar navbar-expand-lg ch-navbar" aria-label="Navegación principal">
+    <div class="container">
+      <a class="navbar-brand ch-brand" href="#">
+        <i class="bi bi-broadcast-pin me-2"></i>CommsHub
+      </a>
+      <button class="navbar-toggler" type="button"
+              data-bs-toggle="collapse" data-bs-target="#navPrincipal"
+              aria-controls="navPrincipal" aria-expanded="false"
+              aria-label="Abrir menú">
+        <span class="navbar-toggler-icon"></span>
+      </button>
+      <div class="collapse navbar-collapse" id="navPrincipal">
+        <ul class="navbar-nav ms-auto align-items-lg-center gap-lg-1">
+          <li class="nav-item"><a class="nav-link" href="#modulos">Módulos</a></li>
+          <li class="nav-item"><a class="nav-link" href="#caracteristicas">Ventajas</a></li>
+          <!-- Nuevos enlaces U3-A2 -->
+          <li class="nav-item"><a class="nav-link" href="#panel-api">Panel en Vivo</a></li>
+          <li class="nav-item"><a class="nav-link" href="#cola-envios">Cola de Envíos</a></li>
+          <li class="nav-item"><a class="nav-link" href="#registro">Contacto</a></li>
+          <li class="nav-item ms-lg-2">
+            <a class="ch-btn-nav" href="#registro">Solicitar demo</a>
+          </li>
+        </ul>
+      </div>
+    </div>
+  </nav>
+
+  <!-- CARRUSEL — 3 slides heredados de U3-A1 -->
+  <div id="carruselHero" class="carousel slide ch-carousel"
+       data-bs-ride="carousel" data-bs-interval="5000">
+    <div class="carousel-indicators">
+      <button type="button" data-bs-target="#carruselHero" data-bs-slide-to="0"
+              class="active" aria-current="true" aria-label="Slide 1"></button>
+      <button type="button" data-bs-target="#carruselHero" data-bs-slide-to="1"
+              aria-label="Slide 2"></button>
+      <button type="button" data-bs-target="#carruselHero" data-bs-slide-to="2"
+              aria-label="Slide 3"></button>
+    </div>
+    <div class="carousel-inner">
+      <div class="carousel-item active ch-slide ch-slide--1">
+        <div class="container h-100 d-flex align-items-center">
+          <div class="ch-slide-content">
+            <span class="ch-badge">Gestión masiva</span>
+            <h1 class="ch-slide-title">Millones de comunicaciones,<br>un solo panel de control</h1>
+            <p class="ch-slide-desc">Orquesta estados de cuenta, facturas CFDI 4.0 y notificaciones regulatorias desde una plataforma unificada.</p>
+            <a href="#registro" class="ch-btn-primary me-2">Solicitar demo</a>
+            <a href="#modulos"  class="ch-btn-outline">Ver módulos</a>
+          </div>
+        </div>
+      </div>
+      <div class="carousel-item ch-slide ch-slide--2">
+        <div class="container h-100 d-flex align-items-center">
+          <div class="ch-slide-content">
+            <span class="ch-badge">Trazabilidad</span>
+            <h1 class="ch-slide-title">Seguimiento en tiempo real<br>de cada entrega</h1>
+            <p class="ch-slide-desc">Audita el ciclo completo: generación, personalización, entrega multicanal y confirmación de lectura con estampado de tiempo.</p>
+            <a href="#registro" class="ch-btn-primary me-2">Solicitar demo</a>
+            <a href="#caracteristicas" class="ch-btn-outline">Cómo funciona</a>
+          </div>
+        </div>
+      </div>
+      <div class="carousel-item ch-slide ch-slide--3">
+        <div class="container h-100 d-flex align-items-center">
+          <div class="ch-slide-content">
+            <span class="ch-badge">Integración</span>
+            <h1 class="ch-slide-title">Conecta con tu ERP, CRM<br>y núcleo bancario</h1>
+            <p class="ch-slide-desc">API REST documentada con OpenAPI 3.1 y conectores nativos para SAP, Salesforce y Oracle Siebel sin código adicional.</p>
+            <a href="#registro" class="ch-btn-primary me-2">Solicitar demo</a>
+            <a href="#registro" class="ch-btn-outline">Ver documentación</a>
+          </div>
+        </div>
+      </div>
+    </div>
+    <button class="carousel-control-prev" type="button"
+            data-bs-target="#carruselHero" data-bs-slide="prev">
+      <span class="carousel-control-prev-icon" aria-hidden="true"></span>
+      <span class="visually-hidden">Anterior</span>
+    </button>
+    <button class="carousel-control-next" type="button"
+            data-bs-target="#carruselHero" data-bs-slide="next">
+      <span class="carousel-control-next-icon" aria-hidden="true"></span>
+      <span class="visually-hidden">Siguiente</span>
+    </button>
+  </div>
+
+</header>
+
+
+<!-- ══════════════════════════════════════════
+     MAIN
+══════════════════════════════════════════ -->
+<main>
+
+  <!-- ── SECTION: Módulos — CSS GRID (heredado U3-A1) ── -->
+  <section id="modulos" class="ch-seccion">
+    <div class="container">
+      <div class="text-center mb-5">
+        <span class="ch-eyebrow">Plataforma modular</span>
+        <h2 class="ch-titulo-seccion">Módulos principales</h2>
+        <p class="ch-sub-seccion">Cada módulo opera de forma independiente o integrado, adaptándose al roadmap de tu organización.</p>
+      </div>
+      <div class="ch-grid-cards">
+        <article class="card ch-card h-100">
+          <div class="card-body">
+            <div class="ch-icono ch-icono--teal"><i class="bi bi-file-earmark-bar-graph-fill"></i></div>
+            <h3 class="ch-card-titulo">Estados de cuenta</h3>
+            <p class="card-text">Composición dinámica con datos en tiempo real, plantillas reguladas y firma digital para banca, seguros y telecomunicaciones.</p>
+          </div>
+          <div class="card-footer bg-transparent border-top-0 pt-0">
+            <a href="#registro" class="ch-link-mas">Más información <i class="bi bi-arrow-right"></i></a>
+          </div>
+        </article>
+        <article class="card ch-card h-100">
+          <div class="card-body">
+            <div class="ch-icono ch-icono--amber"><i class="bi bi-receipt-cutoff"></i></div>
+            <h3 class="ch-card-titulo">Facturación CFDI 4.0</h3>
+            <p class="card-text">Emisión masiva con timbrado ante el SAT en milisegundos, validación de RFC y cancelación conforme a normativa 2025.</p>
+          </div>
+          <div class="card-footer bg-transparent border-top-0 pt-0">
+            <a href="#registro" class="ch-link-mas">Más información <i class="bi bi-arrow-right"></i></a>
+          </div>
+        </article>
+        <article class="card ch-card h-100">
+          <div class="card-body">
+            <div class="ch-icono ch-icono--navy"><i class="bi bi-shield-check"></i></div>
+            <h3 class="ch-card-titulo">Notificaciones regulatorias</h3>
+            <p class="card-text">Envío automatizado de avisos de privacidad y contratos con acuse de recibo electrónico y custodia de evidencia por 10 años.</p>
+          </div>
+          <div class="card-footer bg-transparent border-top-0 pt-0">
+            <a href="#registro" class="ch-link-mas">Más información <i class="bi bi-arrow-right"></i></a>
+          </div>
+        </article>
+      </div>
+    </div>
+  </section>
+
+
+  <!-- ── SECTION: Características — CSS FLEXBOX (heredado U3-A1) ── -->
+  <section id="caracteristicas" class="ch-seccion ch-seccion--alt">
+    <div class="container">
+      <div class="text-center mb-5">
+        <span class="ch-eyebrow">Por qué CommsHub</span>
+        <h2 class="ch-titulo-seccion">Diseñado para grandes volúmenes</h2>
+      </div>
+      <div class="ch-flex-caract">
+        <div class="ch-caract-item">
+          <i class="bi bi-lightning-charge-fill ch-caract-icono"></i>
+          <h3 class="ch-caract-titulo">Alto rendimiento</h3>
+          <p class="ch-caract-texto">Arquitectura distribuida capaz de procesar más de 2 millones de documentos por hora con SLA 99.95%.</p>
+        </div>
+        <div class="ch-caract-item">
+          <i class="bi bi-lock-fill ch-caract-icono"></i>
+          <h3 class="ch-caract-titulo">Seguridad empresarial</h3>
+          <p class="ch-caract-texto">Cifrado AES-256 en reposo y TLS 1.3 en tránsito. Certificado ISO 27001 y cumplimiento CNBV.</p>
+        </div>
+        <div class="ch-caract-item">
+          <i class="bi bi-puzzle-fill ch-caract-icono"></i>
+          <h3 class="ch-caract-titulo">Integración nativa</h3>
+          <p class="ch-caract-texto">Conectores certificados para SAP S/4HANA, Salesforce y Oracle Siebel. Configuración sin código para el 80% de los casos.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+
+  <!-- ══════════════════════════════════════════════════════
+       U3-A2: MÓDULO 2 — Consumo API REST simulada
+       Simula un GET /api/ccm/comunicaciones con fetch()
+       Los datos llegan después de 1.6 s de latencia artificial
+  ══════════════════════════════════════════════════════ -->
+  <section id="panel-api" class="ch-seccion ch-panel-api">
+    <div class="container">
+
+      <div class="text-center mb-5">
+        <span class="ch-eyebrow">Módulo 2 — API REST</span>
+        <h2 class="ch-titulo-seccion">Panel de comunicaciones en vivo</h2>
+        <p class="ch-sub-seccion">Datos cargados dinámicamente desde el endpoint <code>/api/ccm/comunicaciones</code> — sin recargar la página.</p>
+      </div>
+
+      <!-- Controles de la API -->
+      <div class="text-center mb-4">
+        <button class="ch-btn-primary" id="btnRecargarApi">
+          <i class="bi bi-arrow-clockwise me-2"></i>Recargar datos
+        </button>
+      </div>
+
+      <!-- Contenedor donde JS inyecta las tarjetas -->
+      <div id="apiResultados" aria-live="polite">
+        <!-- El spinner y las tarjetas se renderizan aquí por JavaScript -->
+      </div>
+
+    </div>
+  </section>
+
+
+  <!-- ══════════════════════════════════════════════════════
+       U3-A2: MÓDULO 3 — Manipulación del DOM (Cola de Envíos)
+       Permite agregar / completar / eliminar ítems
+       usando operaciones inmutables sobre un array de estado
+  ══════════════════════════════════════════════════════ -->
+  <section id="cola-envios" class="ch-seccion ch-seccion--alt">
+    <div class="container">
+
+      <div class="text-center mb-5">
+        <span class="ch-eyebrow">Módulo 3 — DOM</span>
+        <h2 class="ch-titulo-seccion">Cola de envíos pendientes</h2>
+        <p class="ch-sub-seccion">Gestión de trabajos de comunicación: agrega, marca como enviado o elimina cada lote.</p>
+      </div>
+
+      <div class="row justify-content-center">
+        <div class="col-lg-7">
+
+          <!-- Campo de entrada + botón Agregar -->
+          <div class="ch-cola-input-wrap">
+            <input type="text" class="ch-cola-input" id="inputEnvio"
+                   placeholder="Descripción del lote (ej. CFDI Q3 – BBVA 45 k docs)"
+                   maxlength="120" autocomplete="off">
+            <button class="ch-btn-primary" id="btnAgregar">
+              <i class="bi bi-plus-lg"></i>
+            </button>
+          </div>
+
+          <!-- Contadores y botón limpiar completados -->
+          <div class="ch-cola-header">
+            <div class="ch-counters" id="contadores" aria-live="polite">
+              <!-- JS actualiza este bloque -->
+            </div>
+            <button class="ch-btn-limpiar" id="btnLimpiar">
+              <i class="bi bi-trash3 me-1"></i>Eliminar enviados
+            </button>
+          </div>
+
+          <!-- Lista de ítems — JS la gestiona completamente -->
+          <div id="listaEnvios" aria-live="polite">
+            <!-- Los ítems se renderizan aquí -->
+          </div>
+
+        </div>
+      </div>
+    </div>
+  </section>
+
+
+  <!-- ── ARTICLE: Formulario — U3-A1 base + validación en tiempo real U3-A2 ── -->
+  <article id="registro" class="ch-seccion">
+    <div class="container">
+
+      <div class="text-center mb-5">
+        <span class="ch-eyebrow">Contacto</span>
+        <h2 class="ch-titulo-seccion">Solicita tu demo personalizada</h2>
+        <p class="ch-sub-seccion">Un especialista en CCM se pondrá en contacto en menos de 24 horas hábiles.</p>
+      </div>
+
+      <div class="row justify-content-center">
+        <div class="col-lg-7">
+          <div class="ch-form-card">
+
+            <!-- ══════════════════════════════════════════════════════
+                 U3-A2: MÓDULO 1 — Validación en tiempo real
+                 El evento 'input' dispara la validación por campo
+                 ANTES de hacer submit. Se añade una línea de mensaje
+                 dinámica debajo de cada campo vigilado.
+            ══════════════════════════════════════════════════════ -->
+            <form id="formDemo" class="needs-validation" novalidate>
+
+              <!-- Nombre — campo con validación en tiempo real -->
+              <div class="mb-3 ch-campo-validado">
+                <label for="nombre" class="form-label ch-label">
+                  Nombre completo <span class="ch-req">*</span>
+                </label>
+                <input type="text" class="form-control ch-input" id="nombre"
+                       placeholder="Ej. María López García"
+                       required minlength="5" maxlength="80">
+                <!-- Mensaje dinámico inyectado por JS -->
+                <div class="ch-msg-validacion" id="msgNombre"></div>
+              </div>
+
+              <!-- Empresa -->
+              <div class="mb-3">
+                <label for="empresa" class="form-label ch-label">
+                  Empresa <span class="ch-req">*</span>
+                </label>
+                <input type="text" class="form-control ch-input" id="empresa"
+                       placeholder="Ej. BBVA México"
+                       required minlength="2" maxlength="100">
+                <div class="valid-feedback">Perfecto.</div>
+                <div class="invalid-feedback">Indica el nombre de tu organización.</div>
+              </div>
+
+              <!-- Email + Teléfono en fila — ambos con validación en tiempo real -->
+              <div class="row g-3 mb-3">
+                <div class="col-md-6 ch-campo-validado">
+                  <label for="email" class="form-label ch-label">
+                    Correo corporativo <span class="ch-req">*</span>
+                  </label>
+                  <input type="email" class="form-control ch-input" id="email"
+                         placeholder="usuario@empresa.com" required>
+                  <div class="ch-msg-validacion" id="msgEmail"></div>
+                </div>
+                <div class="col-md-6 ch-campo-validado">
+                  <label for="telefono" class="form-label ch-label">Teléfono</label>
+                  <input type="tel" class="form-control ch-input" id="telefono"
+                         placeholder="55 1234 5678"
+                         pattern="[0-9\s\-\+\(\)]{7,20}">
+                  <div class="ch-msg-validacion" id="msgTelefono"></div>
+                </div>
+              </div>
+
+              <!-- Tipo de comunicación -->
+              <div class="mb-3">
+                <label for="tipoCom" class="form-label ch-label">
+                  Tipo de comunicación <span class="ch-req">*</span>
+                </label>
+                <select class="form-select ch-input" id="tipoCom" required>
+                  <option value="" selected disabled>Selecciona un tipo…</option>
+                  <option value="estados">Estados de cuenta</option>
+                  <option value="facturacion">Facturación CFDI 4.0</option>
+                  <option value="notificaciones">Notificaciones regulatorias</option>
+                  <option value="multicanal">Multicanal (varios)</option>
+                </select>
+                <div class="valid-feedback">Perfecto.</div>
+                <div class="invalid-feedback">Selecciona el tipo de comunicación.</div>
+              </div>
+
+              <!-- Mensaje -->
+              <div class="mb-4">
+                <label for="mensaje" class="form-label ch-label">Descripción del proyecto</label>
+                <textarea class="form-control ch-input" id="mensaje" rows="3"
+                          maxlength="400"
+                          placeholder="Describe brevemente el caso de uso y el sector…"></textarea>
+                <div class="form-text ch-hint">Máximo 400 caracteres.</div>
+              </div>
+
+              <!-- Términos -->
+              <div class="mb-4">
+                <div class="form-check">
+                  <input class="form-check-input" type="checkbox" id="terminos" required>
+                  <label class="form-check-label ch-label-check" for="terminos">
+                    Acepto el <a href="#" class="ch-link-tc">aviso de privacidad</a>
+                    conforme a la LFPDPPP <span class="ch-req">*</span>
+                  </label>
+                  <div class="invalid-feedback">Debes aceptar el aviso de privacidad.</div>
+                </div>
+              </div>
+
+              <!-- Botón enviar -->
+              <button type="submit" class="ch-btn-primary w-100" id="btnEnviar">
+                <i class="bi bi-send-fill me-2"></i>Solicitar demo gratuita
+              </button>
+
+            </form>
+
+          </div><!-- /ch-form-card -->
+        </div>
+      </div>
+
+    </div>
+  </article>
+
+</main>
+
+
+<!-- ══════════════════════════════════════════
+     FOOTER — heredado de U3-A1 (actualizado U3-A2)
+══════════════════════════════════════════ -->
+<footer class="ch-footer">
+  <div class="container">
+    <div class="ch-footer-inner">
+      <span class="ch-footer-brand">
+        <i class="bi bi-broadcast-pin me-2"></i>CommsHub
+      </span>
+      <span class="ch-footer-info">
+        Actividad U3-A2 &nbsp;|&nbsp; García González Daniel &nbsp;|&nbsp; Grupo 9696 SUAyED FCA UNAM
+      </span>
+      <span class="ch-footer-copy">&copy; 2025 CommsHub</span>
+    </div>
+  </div>
+</footer>
+
+
+<!-- Bootstrap 5 JS Bundle -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.3/js/bootstrap.bundle.min.js"></script>
+
+
+<!-- ══════════════════════════════════════════════════════════════════
+     U3-A2 — MÓDULO 1: Validación en tiempo real
+     Técnica: event listener 'input' por campo + funciones puras
+     de validación que retornan { ok, msg }.
+     Se actualiza el estilo del input y el mensaje debajo
+     en cada pulsación de tecla, sin esperar al submit.
+══════════════════════════════════════════════════════════════════ -->
+<script>
+(() => {
+  'use strict';
+
+  // ── Funciones puras de validación ──────────────────────────────
+  // Reciben una cadena y retornan { ok: boolean, msg: string }
+  // Son funciones puras: sin efectos secundarios, fáciles de probar.
+
+  /**
+   * Valida el nombre: solo letras (incluyendo acentos), mínimo 5 caracteres.
+   * @param {string} valor - Texto del campo nombre
+   * @returns {{ ok: boolean, msg: string }}
+   */
+  function validarNombre(valor) {
+    if (!valor.trim()) return { ok: false, msg: 'El nombre es obligatorio.' };
+    if (valor.trim().length < 5) return { ok: false, msg: 'Mínimo 5 caracteres.' };
+    const regex = /^[A-Za-záéíóúÁÉÍÓÚüÜñÑ\s]{3,}$/;
+    if (!regex.test(valor.trim())) return { ok: false, msg: 'Solo se permiten letras y espacios.' };
+    return { ok: true, msg: '✔ Nombre válido.' };
+  }
+
+  /**
+   * Valida el correo electrónico con expresión regular RFC-5322 simplificada.
+   * @param {string} valor - Texto del campo email
+   * @returns {{ ok: boolean, msg: string }}
+   */
+  function validarEmail(valor) {
+    if (!valor.trim()) return { ok: false, msg: 'El correo es obligatorio.' };
+    const regex = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
+    if (!regex.test(valor.trim())) return { ok: false, msg: 'Formato inválido (ej. usuario@empresa.com).' };
+    return { ok: true, msg: '✔ Correo válido.' };
+  }
+
+  /**
+   * Valida el teléfono: dígitos, espacios, guiones, paréntesis, +.
+   * El campo es opcional; si está vacío no se marca como error.
+   * @param {string} valor - Texto del campo teléfono
+   * @returns {{ ok: boolean, msg: string }}
+   */
+  function validarTelefono(valor) {
+    if (!valor.trim()) return { ok: null, msg: '' }; // opcional, vacío = neutro
+    const regex = /^[0-9\s\-\+\(\)]{7,20}$/;
+    if (!regex.test(valor.trim())) return { ok: false, msg: 'Solo números, espacios, +, (), -. Mín 7 dígitos.' };
+    return { ok: true, msg: '✔ Teléfono válido.' };
+  }
+
+  /**
+   * Aplica el resultado de validación a un <input> y su <div> de mensaje.
+   * @param {HTMLInputElement} input - El campo del formulario
+   * @param {HTMLElement}      msgEl - El div donde se muestra el mensaje
+   * @param {{ ok: boolean|null, msg: string }} resultado
+   */
+  function aplicarEstado(input, msgEl, resultado) {
+    // Limpia clases previas
+    input.classList.remove('campo-ok', 'campo-error');
+    msgEl.classList.remove('ok', 'error');
+    msgEl.textContent = resultado.msg;
+
+    if (resultado.ok === true) {
+      input.classList.add('campo-ok');
+      msgEl.classList.add('ok');
+    } else if (resultado.ok === false) {
+      input.classList.add('campo-error');
+      msgEl.classList.add('error');
+    }
+    // null = campo vacío opcional → sin estado visual
+  }
+
+  // ── Conectar los listeners a cada campo ────────────────────────
+  // El evento 'input' se dispara en cada cambio de carácter.
+
+  const campoNombre   = document.getElementById('nombre');
+  const campoEmail    = document.getElementById('email');
+  const campoTelefono = document.getElementById('telefono');
+  const msgNombre     = document.getElementById('msgNombre');
+  const msgEmail      = document.getElementById('msgEmail');
+  const msgTelefono   = document.getElementById('msgTelefono');
+
+  campoNombre.addEventListener('input', () =>
+    aplicarEstado(campoNombre, msgNombre, validarNombre(campoNombre.value))
+  );
+
+  campoEmail.addEventListener('input', () =>
+    aplicarEstado(campoEmail, msgEmail, validarEmail(campoEmail.value))
+  );
+
+  campoTelefono.addEventListener('input', () =>
+    aplicarEstado(campoTelefono, msgTelefono, validarTelefono(campoTelefono.value))
+  );
+
+  // ── Validación Bootstrap al enviar (heredada de U3-A1) ─────────
+  const formDemo = document.getElementById('formDemo');
+  formDemo.addEventListener('submit', (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    formDemo.classList.add('was-validated');
+
+    // Forzar validación visual de los campos con validación en tiempo real
+    aplicarEstado(campoNombre,   msgNombre,   validarNombre(campoNombre.value));
+    aplicarEstado(campoEmail,    msgEmail,    validarEmail(campoEmail.value));
+    aplicarEstado(campoTelefono, msgTelefono, validarTelefono(campoTelefono.value));
+
+    if (formDemo.checkValidity()) {
+      const btn = document.getElementById('btnEnviar');
+      btn.innerHTML = '<i class="bi bi-check-circle-fill me-2"></i>¡Solicitud enviada!';
+      btn.disabled = true;
+      const alerta = document.createElement('div');
+      alerta.className = 'alert alert-success mt-3';
+      alerta.innerHTML = '<i class="bi bi-envelope-check me-2"></i>Un especialista te contactará en menos de 24 horas hábiles.';
+      formDemo.appendChild(alerta);
+    }
+  });
+
+})();
+</script>
+
+
+<!-- ══════════════════════════════════════════════════════════════════
+     U3-A2 — MÓDULO 2: Consumo de API REST simulada con fetch()
+     Técnica: fetch() retorna una Promise resuelta con 1.6 s de
+     latencia artificial (setTimeout). El resultado se renderiza
+     en el DOM sin recargar la página.
+══════════════════════════════════════════════════════════════════ -->
+<script>
+(() => {
+  'use strict';
+
+  // ── Datos que simula el endpoint GET /api/ccm/comunicaciones ───
+  // En producción esto vendría del servidor; aquí lo definimos
+  // en el cliente para cumplir el requisito de la actividad.
+  const DATOS_API = [
+    { id: 1, tipo: 'Estado de cuenta',          cliente: 'BBVA México',       lote: 180420, canal: 'Email + PDF',  estatus: 'ok',        icono: 'bi-file-earmark-bar-graph-fill', color: '#10B981', colorBg: 'rgba(16,185,129,.1)' },
+    { id: 2, tipo: 'Factura CFDI 4.0',           cliente: 'Telcel S.A. de C.V.',lote:  52300, canal: 'SFTP + Portal',estatus: 'ok',        icono: 'bi-receipt-cutoff',             color: '#F59E0B', colorBg: 'rgba(245,158,11,.1)'  },
+    { id: 3, tipo: 'Aviso de privacidad',        cliente: 'GNP Seguros',       lote:  31000, canal: 'Email',        estatus: 'pendiente', icono: 'bi-shield-check',               color: '#2563EB', colorBg: 'rgba(37,99,235,.1)'  },
+    { id: 4, tipo: 'Notificación regulatoria',   cliente: 'CFE Distribución',  lote:  94800, canal: 'SMS + Email',  estatus: 'ok',        icono: 'bi-bell-fill',                  color: '#10B981', colorBg: 'rgba(16,185,129,.1)'  },
+    { id: 5, tipo: 'Contrato personalizado',     cliente: 'Megacable',         lote:   8700, canal: 'Portal web',   estatus: 'error',     icono: 'bi-file-earmark-text-fill',     color: '#EF4444', colorBg: 'rgba(239,68,68,.1)'   },
+    { id: 6, tipo: 'Resumen de movimientos',     cliente: 'Banorte',           lote: 220000, canal: 'Email + App',  estatus: 'pendiente', icono: 'bi-bar-chart-fill',             color: '#F59E0B', colorBg: 'rgba(245,158,11,.1)'  },
+  ];
+
+  /**
+   * Simula una llamada a la API REST con latencia de red artificial.
+   * Retorna una Promise que resuelve con los datos CCM tras 1.6 segundos.
+   * @returns {Promise<Array>}
+   */
+  function fetchComunicaciones() {
+    return new Promise((resolve) => {
+      setTimeout(() => resolve(DATOS_API), 1600);
+    });
+  }
+
+  /**
+   * Renderiza el spinner de carga mientras la Promise está pendiente.
+   */
+  function mostrarSpinner() {
+    document.getElementById('apiResultados').innerHTML = `
+      <div class="ch-spinner-wrap">
+        <div class="spinner-border text-primary" role="status" style="width:2.5rem;height:2.5rem;">
+          <span class="visually-hidden">Cargando…</span>
+        </div>
+        <p class="mt-3 fw-semibold">Consultando <code>/api/ccm/comunicaciones</code>…</p>
+        <p class="small text-muted">Simulando latencia de red: 1.6 s</p>
+      </div>`;
+  }
+
+  /**
+   * Renderiza las tarjetas de comunicaciones una vez que la API responde.
+   * @param {Array} comunicaciones - Datos recibidos del endpoint simulado
+   */
+  function renderizarComunicaciones(comunicaciones) {
+    const etiqueta = { ok: 'badge-ok', pendiente: 'badge-pendiente', error: 'badge-error' };
+    const texto    = { ok: 'Entregado', pendiente: 'En proceso',     error: 'Error'       };
+
+    // Construir el HTML del grid de tarjetas
+    const tarjetas = comunicaciones.map(c => `
+      <div class="col-md-6 col-lg-4">
+        <div class="ch-api-card">
+          <div class="ch-api-icono" style="background:${c.colorBg};color:${c.color};">
+            <i class="bi ${c.icono}"></i>
+          </div>
+          <div class="ch-api-meta">
+            <div class="ch-api-nombre">${c.tipo}</div>
+            <div class="ch-api-detalle">${c.cliente} — ${c.lote.toLocaleString('es-MX')} docs — ${c.canal}</div>
+          </div>
+          <span class="ch-api-badge ${etiqueta[c.estatus]}">${texto[c.estatus]}</span>
+        </div>
+      </div>`
+    ).join('');
+
+    document.getElementById('apiResultados').innerHTML = `
+      <div class="row g-3">${tarjetas}</div>
+      <p class="text-center text-muted small mt-4">
+        <i class="bi bi-check-circle-fill text-success me-1"></i>
+        ${comunicaciones.length} registros cargados — endpoint simulado: <code>GET /api/ccm/comunicaciones</code>
+      </p>`;
+  }
+
+  /**
+   * Orquesta la carga: muestra spinner → llama a la API → renderiza datos.
+   * Se ejecuta al cargar la página y al pulsar "Recargar datos".
+   */
+  async function cargarPanel() {
+    mostrarSpinner();
+    try {
+      const datos = await fetchComunicaciones();
+      renderizarComunicaciones(datos);
+    } catch (err) {
+      document.getElementById('apiResultados').innerHTML = `
+        <div class="alert alert-danger text-center">
+          <i class="bi bi-exclamation-triangle-fill me-2"></i>
+          Error al consultar la API: ${err.message}
+        </div>`;
+    }
+  }
+
+  // ── Disparar al cargar la página + botón de recarga ────────────
+  document.addEventListener('DOMContentLoaded', cargarPanel);
+  document.getElementById('btnRecargarApi').addEventListener('click', cargarPanel);
+
+})();
+</script>
+
+
+<!-- ══════════════════════════════════════════════════════════════════
+     U3-A2 — MÓDULO 3: Manipulación del DOM — Cola de Envíos
+     Técnica: array de estado inmutable en memoria.
+     - Agregar: spread operator [...prev, nuevo]
+     - Completar: map() sin mutar el array original
+     - Eliminar: filter() que excluye el ítem por id
+     El DOM se re-renderiza completo con cada cambio de estado.
+══════════════════════════════════════════════════════════════════ -->
+<script>
+(() => {
+  'use strict';
+
+  // ── Estado inicial de la cola ───────────────────────────────────
+  // Array de objetos; NUNCA se muta directamente.
+  let estado = [
+    { id: 1, texto: 'CFDI mensual — Banorte 220 k documentos',        completado: false },
+    { id: 2, texto: 'Estado de cuenta Q3 — BBVA México 180 k docs',   completado: false },
+    { id: 3, texto: 'Avisos privacidad — GNP Seguros 31 k clientes',  completado: true  },
+  ];
+  let siguienteId = 4; // Contador auto-incremental de IDs
+
+  // ── Referencias al DOM ──────────────────────────────────────────
+  const listaEl    = document.getElementById('listaEnvios');
+  const contEl     = document.getElementById('contadores');
+  const inputEl    = document.getElementById('inputEnvio');
+  const btnAgregar = document.getElementById('btnAgregar');
+  const btnLimpiar = document.getElementById('btnLimpiar');
+
+  // ── Renderizado completo desde el estado ────────────────────────
+  /**
+   * Reconstruye el DOM de la lista a partir del array de estado actual.
+   * Separa responsabilidades: el estado decide QUÉ mostrar, el render CÓMO.
+   */
+  function render() {
+    const total      = estado.length;
+    const completos  = estado.filter(t => t.completado).length;
+    const pendientes = total - completos;
+
+    // Actualizar contadores
+    contEl.innerHTML = `
+      <span><b>${total}</b> total</span>
+      <span><b>${pendientes}</b> pendientes</span>
+      <span><b>${completos}</b> enviados</span>`;
+
+    // Activar/desactivar botón limpiar
+    btnLimpiar.disabled = completos === 0;
+
+    // Renderizar ítems
+    if (total === 0) {
+      listaEl.innerHTML = '<p class="text-center text-muted small">Cola vacía. Agrega un lote de envío.</p>';
+      return;
+    }
+
+    listaEl.innerHTML = estado.map(item => `
+      <div class="ch-envio-item ${item.completado ? 'completado' : ''}" data-id="${item.id}">
+        <span class="ch-envio-texto">${escapeHtml(item.texto)}</span>
+        <!-- Botón completar -->
+        <button class="ch-envio-btn ch-envio-btn--ok btn-completar"
+                data-id="${item.id}"
+                title="${item.completado ? 'Marcar como pendiente' : 'Marcar como enviado'}"
+                aria-label="${item.completado ? 'Revertir' : 'Marcar enviado'}">
+          <i class="bi ${item.completado ? 'bi-arrow-counterclockwise' : 'bi-check-circle'}"></i>
+        </button>
+        <!-- Botón eliminar -->
+        <button class="ch-envio-btn ch-envio-btn--del btn-eliminar"
+                data-id="${item.id}"
+                title="Eliminar" aria-label="Eliminar lote">
+          <i class="bi bi-trash3"></i>
+        </button>
+      </div>`
+    ).join('');
+  }
+
+  /**
+   * Previene XSS escapando caracteres especiales antes de insertarlos en el DOM.
+   * @param {string} str
+   * @returns {string}
+   */
+  function escapeHtml(str) {
+    return str.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+  }
+
+  // ── Operaciones sobre el estado ─────────────────────────────────
+
+  /**
+   * Agrega un nuevo ítem al estado con spread operator.
+   * Crea un nuevo array SIN mutar el original.
+   */
+  function agregarEnvio() {
+    const texto = inputEl.value.trim();
+    if (!texto) { inputEl.focus(); return; }
+    // Spread: [...estado, nuevo] crea un nuevo array
+    estado = [...estado, { id: siguienteId++, texto, completado: false }];
+    inputEl.value = '';
+    render();
+    // Pequeña animación en el último ítem añadido
+    const items = listaEl.querySelectorAll('.ch-envio-item');
+    if (items.length) items[items.length - 1].classList.add('nuevo');
+  }
+
+  /**
+   * Alterna el estado completado de un ítem usando map().
+   * map() recorre el array y retorna uno NUEVO; el original no se toca.
+   * @param {number} id - ID del ítem a completar/revertir
+   */
+  function toggleCompletado(id) {
+    estado = estado.map(item =>
+      item.id === id ? { ...item, completado: !item.completado } : item
+    );
+    render();
+  }
+
+  /**
+   * Elimina un ítem del estado usando filter().
+   * filter() retorna un nuevo array excluyendo el ítem cuyo id coincide.
+   * @param {number} id - ID del ítem a eliminar
+   */
+  function eliminarEnvio(id) {
+    estado = estado.filter(item => item.id !== id);
+    render();
+  }
+
+  /**
+   * Elimina todos los ítems marcados como completados (enviados).
+   */
+  function limpiarCompletados() {
+    estado = estado.filter(item => !item.completado);
+    render();
+  }
+
+  // ── Event listeners ─────────────────────────────────────────────
+
+  // Agregar al pulsar botón
+  btnAgregar.addEventListener('click', agregarEnvio);
+
+  // Agregar al presionar Enter en el input
+  inputEl.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') agregarEnvio();
+  });
+
+  // Limpiar completados
+  btnLimpiar.addEventListener('click', limpiarCompletados);
+
+  // Delegación de eventos en la lista (completar / eliminar)
+  // Un solo listener en el contenedor padre detecta clics en cualquier botón hijo.
+  listaEl.addEventListener('click', (e) => {
+    const btnComp = e.target.closest('.btn-completar');
+    const btnElim = e.target.closest('.btn-eliminar');
+
+    if (btnComp) toggleCompletado(Number(btnComp.dataset.id));
+    if (btnElim) eliminarEnvio(Number(btnElim.dataset.id));
+  });
+
+  // ── Render inicial ───────────────────────────────────────────────
+  render();
+
+})();
+</script>
+
+</body>
+</html>
